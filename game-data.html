@@ -1,0 +1,157 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Data API - Steam Generator</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fab fa-steam"></i>
+                <h1>Steam Generator</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="game-data.html" class="active"><i class="fas fa-database"></i> Game Data</a></li>
+                <li><a href="download.html"><i class="fas fa-download"></i> Download</a></li>
+                <li><a href="app-list.html"><i class="fas fa-list"></i> Steam Apps</a></li>
+                <li><a href="store-info.html"><i class="fas fa-store"></i> Store Info</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div class="page-icon">
+                <i class="fas fa-database"></i>
+            </div>
+            <div class="page-title">
+                <h1>Game Data API</h1>
+                <p>Access comprehensive game information from our curated database</p>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <div class="api-details">
+                <div class="detail-card">
+                    <h3><i class="fas fa-info-circle"></i> Game Database</h3>
+                    <p>Browse through thousands of games with comprehensive information including images, names, and download links.</p>
+                </div>
+            </div>
+
+            <div class="action-section">
+                <button onclick="fetchGameData()" class="btn primary large">
+                    <i class="fas fa-play"></i> Fetch Game Data
+                </button>
+                <div class="loading-indicator" id="loading" style="display: none;">
+                    <div class="spinner"></div>
+                    <span>Loading game data...</span>
+                </div>
+            </div>
+
+            <div id="game-data-result" class="result-section"></div>
+        </div>
+    </main>
+
+    <script src="api-utils.js"></script>
+    <script>
+        async function fetchGameData() {
+            const resultContainer = document.getElementById('game-data-result');
+            const loadingIndicator = document.getElementById('loading');
+            
+            loadingIndicator.style.display = 'flex';
+            resultContainer.innerHTML = '';
+            
+            try {
+                const response = await fetch('https://fares.top/game_data.json');
+                if (!response.ok) throw new Error('Failed to fetch game data');
+                
+                const data = await response.json();
+                displayGameData(data, resultContainer);
+            } catch (error) {
+                resultContainer.innerHTML = `
+                    <div class="error-card">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Error Loading Data</h3>
+                        <p>${error.message}</p>
+                    </div>
+                `;
+            } finally {
+                loadingIndicator.style.display = 'none';
+            }
+        }
+
+        function displayGameData(data, container) {
+            if (typeof data === 'object' && data !== null && !Array.isArray(data)) {
+                const gameIds = Object.keys(data);
+                let html = `
+                    <div class="success-card">
+                        <i class="fas fa-check-circle"></i>
+                        <h3>Found ${gameIds.length} Games</h3>
+                        <p>Browse through the game collection below</p>
+                    </div>
+                `;
+                
+                html += '<div class="games-grid">';
+                gameIds.slice(0, 50).forEach(gameId => {
+                    const game = data[gameId];
+                    html += `
+                        <div class="game-card">
+                            <div class="game-image">
+                                ${game.image_url ? `<img src="${game.image_url}" alt="${game.game_name}" onerror="this.style.display='none';">` : '<div class="no-image"><i class="fas fa-gamepad"></i></div>'}
+                            </div>
+                            <div class="game-info">
+                                <h4>${game.game_name || 'Unnamed Game'}</h4>
+                                <p class="game-id">ID: ${game.game_id}</p>
+                                <div class="game-actions">
+                                    <button onclick="downloadSpecificGame('${game.game_id}')" class="btn primary small">
+                                        <i class="fas fa-download"></i> Download
+                                    </button>
+                                    <button onclick="viewGameDetails('${game.game_id}')" class="btn secondary small">
+                                        <i class="fas fa-info"></i> Details
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    `;
+                });
+                html += '</div>';
+                
+                if (gameIds.length > 50) {
+                    html += `
+                        <div class="pagination-info">
+                            <p>Showing first 50 of ${gameIds.length} games</p>
+                            <button onclick="showMoreGames()" class="btn secondary">
+                                <i class="fas fa-plus"></i> Load More Games
+                            </button>
+                        </div>
+                    `;
+                }
+            } else {
+                html = `
+                    <div class="error-card">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Invalid Data Format</h3>
+                        <p>The API returned unexpected data format</p>
+                    </div>
+                `;
+            }
+            
+            container.innerHTML = html;
+        }
+
+        function downloadSpecificGame(gameId) {
+            window.location.href = `download.html?id=${gameId}`;
+        }
+
+        function viewGameDetails(gameId) {
+            window.location.href = `store-info.html?id=${gameId}`;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,138 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Game Downloads - Steam Generator</title>
+    <link href="style.css" rel="stylesheet" type="text/css" />
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fab fa-steam"></i>
+                <h1>Steam Generator</h1>
+            </div>
+            <ul class="nav-menu">
+                <li><a href="index.html"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="game-data.html"><i class="fas fa-database"></i> Game Data</a></li>
+                <li><a href="download.html" class="active"><i class="fas fa-download"></i> Download</a></li>
+                <li><a href="app-list.html"><i class="fas fa-list"></i> Steam Apps</a></li>
+                <li><a href="store-info.html"><i class="fas fa-store"></i> Store Info</a></li>
+            </ul>
+        </div>
+    </nav>
+
+    <main class="main-content">
+        <div class="page-header">
+            <div class="page-icon">
+                <i class="fas fa-download"></i>
+            </div>
+            <div class="page-title">
+                <h1>Game Downloads</h1>
+                <p>Download game files directly using Steam IDs</p>
+            </div>
+        </div>
+
+        <div class="content-section">
+            <div class="download-form">
+                <div class="form-card">
+                    <h3><i class="fas fa-gamepad"></i> Enter Steam ID</h3>
+                    <div class="input-container">
+                        <input type="text" id="steam-id-download" placeholder="e.g., 730 (Counter-Strike)" class="input-field">
+                        <button onclick="downloadGame()" class="btn primary">
+                            <i class="fas fa-download"></i> Generate Download
+                        </button>
+                    </div>
+                    <div class="help-text">
+                        <p><i class="fas fa-info-circle"></i> Popular Steam IDs: 730 (CS:GO), 440 (TF2), 570 (Dota 2)</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="api-info">
+                <div class="info-card">
+                    <h3><i class="fas fa-server"></i> Download Source</h3>
+                    <div class="code-block">
+                        <code>https://steamdatabase.s3.eu-north-1.amazonaws.com/{steam_id}.zip</code>
+                        <button onclick="copyToClipboard('https://steamdatabase.s3.eu-north-1.amazonaws.com/{steam_id}.zip')" class="copy-btn">
+                            <i class="fas fa-copy"></i>
+                        </button>
+                    </div>
+                    <p>Files are hosted on our Steam Database S3 bucket for fast, reliable downloads.</p>
+                </div>
+            </div>
+
+            <div id="download-result" class="result-section"></div>
+        </div>
+    </main>
+
+    <script src="api-utils.js"></script>
+    <script>
+        function downloadGame() {
+            const steamId = document.getElementById('steam-id-download').value.trim();
+            const resultContainer = document.getElementById('download-result');
+            
+            if (!steamId) {
+                resultContainer.innerHTML = `
+                    <div class="error-card">
+                        <i class="fas fa-exclamation-triangle"></i>
+                        <h3>Steam ID Required</h3>
+                        <p>Please enter a valid Steam ID to generate download link</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            generateDownloadLink(steamId, resultContainer);
+        }
+
+        function generateDownloadLink(steamId, container) {
+            const downloadUrl = `https://steamdatabase.s3.eu-north-1.amazonaws.com/${steamId}.zip`;
+            
+            container.innerHTML = `
+                <div class="download-card">
+                    <div class="download-header">
+                        <i class="fas fa-check-circle"></i>
+                        <h3>Download Ready</h3>
+                    </div>
+                    <div class="download-info">
+                        <p><strong>Steam ID:</strong> ${steamId}</p>
+                        <p><strong>File:</strong> ${steamId}.zip</p>
+                    </div>
+                    <div class="download-actions">
+                        <a href="${downloadUrl}" class="btn primary large" download target="_blank">
+                            <i class="fas fa-download"></i> Download ${steamId}.zip
+                        </a>
+                        <button onclick="copyToClipboard('${downloadUrl}')" class="btn secondary">
+                            <i class="fas fa-copy"></i> Copy URL
+                        </button>
+                    </div>
+                    <div class="download-warning">
+                        <i class="fas fa-info-circle"></i>
+                        <p>File availability depends on our Steam Database. If download fails, the game files may not be available in our system.</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        document.getElementById('steam-id-download').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                downloadGame();
+            }
+        });
+
+        // Check for URL parameter and auto-fill
+        document.addEventListener('DOMContentLoaded', function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const gameId = urlParams.get('id');
+            if (gameId) {
+                document.getElementById('steam-id-download').value = gameId;
+                generateDownloadLink(gameId, document.getElementById('download-result'));
+            }
+        });
+    </script>
+</body>
+</html>
